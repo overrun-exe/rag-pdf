@@ -17,18 +17,32 @@ db = FAISS.load_local(
 
 class Query(BaseModel):
     question: str
+    k: int = 3
 
 @app.post("/ask")
 def ask(q: Query):
-    docs = db.similarity_search(q.question, k=3)
+    docs_and_scores = db.similarity_search_with_score(
+        q.question,
+        k=q.k
+    )
+
+    results = []
+
+    context_parts = []
+
+    for doc, score in docs_and_scores:
+        results.append({
+            "text": doc.page_content,
+            "metadata": doc.metadata,
+            "score": float(score)
+        })
+
+        context_parts.append(doc.page_content)
+
+    context = "\n\n---\n\n".join(context_parts)
 
     return {
         "question": q.question,
-        "chunks": [
-            {
-                "text": d.page_content,
-                "metadata": d.metadata
-            }
-            for d in docs
-        ]
+        "context": context,
+        "results": results
     }
