@@ -4,3 +4,5 @@ lib
 .venv
 share
 bin
+vector_db
+app/__pycache__
